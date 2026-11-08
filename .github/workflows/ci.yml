@@ -23,5 +23,5 @@ jobs:
           tools: composer:v2, pest
 
       - run: composer config repositories.flareia-php path flareia-php-sdk
-      - run: composer install --no-interaction --prefer-dist
+      - run: composer update --no-interaction --prefer-dist
       - run: composer test
