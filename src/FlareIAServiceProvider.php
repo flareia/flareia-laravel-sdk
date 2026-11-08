@@ -15,6 +15,7 @@ use FlareIA\Sdk\Sampling\RateSampler;
 use FlareIA\Sdk\Scope;
 use FlareIA\Sdk\Senders\Sender;
 use FlareIA\Sdk\Support\PayloadCensor;
+use FlareIA\Sdk\Support\SecureBaseUrl;
 use FlareIA\Sdk\Support\StacktraceBuilder;
 use FlareIA\Sdk\Tracer;
 use Illuminate\Support\ServiceProvider;
@@ -32,7 +33,7 @@ class FlareIAServiceProvider extends ServiceProvider
         $this->app->singleton(Api::class, function ($app) {
             return new Api(
                 sender: $app->make(Sender::class),
-                baseUrl: (string) config('flareia.base_url'),
+                baseUrl: SecureBaseUrl::validate((string) config('flareia.base_url')),
                 apiKey: (string) config('flareia.api_key'),
             );
         });

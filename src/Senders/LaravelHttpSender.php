@@ -28,11 +28,18 @@ class LaravelHttpSender implements Sender
 
             if ($response->failed()) {
                 Log::channel(config('logging.default'))
-                    ->debug('FlareIA: failed to report to '.$endpoint, ['status' => $response->status()]);
+                    ->debug('FlareIA: failed to report to '.$this->logHost($endpoint), ['status' => $response->status()]);
             }
         } catch (Throwable $e) {
             Log::channel(config('logging.default'))
-                ->debug('FlareIA: failed to report to '.$endpoint, ['exception' => $e->getMessage()]);
+                ->debug('FlareIA: failed to report to '.$this->logHost($endpoint), ['exception' => $e->getMessage()]);
         }
+    }
+
+    private function logHost(string $endpoint): string
+    {
+        $host = parse_url($endpoint, PHP_URL_HOST);
+
+        return is_string($host) && $host !== '' ? $host : 'FlareIA';
     }
 }
