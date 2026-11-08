@@ -24,4 +24,4 @@ jobs:
 
       - run: composer config repositories.flareia-php path flareia-php-sdk
       - run: composer update --no-interaction --prefer-dist
-      - run: composer test
+      - run: ./vendor/bin/pest
