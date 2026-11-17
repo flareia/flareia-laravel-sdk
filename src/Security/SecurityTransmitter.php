@@ -6,6 +6,7 @@ use FlareIA\Sdk\Api;
 use FlareIA\Sdk\Laravel\Jobs\SendFlareIAPayload;
 use FlareIA\Sdk\Laravel\Senders\LaravelHttpSender;
 use FlareIA\Sdk\Laravel\Senders\LaravelVaporSender;
+use FlareIA\Sdk\Laravel\Support\Configuration;
 use Illuminate\Support\Facades\Cache;
 
 class SecurityTransmitter
@@ -57,13 +58,27 @@ class SecurityTransmitter
         $queueSecurity = config('flareia.sender.config.queue_security', true);
 
         if ($this->shouldQueueSecurity($sender, $queueSecurity)) {
-            SendFlareIAPayload::dispatch(
+            $connection = config('flareia.sender.config.connection');
+            $queue = Configuration::resolveSenderQueue(
+                config('flareia.sender.config.queue', config('flareia.queue', 'default')),
+                is_string($connection) ? $connection : null,
+            );
+
+            $pending = SendFlareIAPayload::dispatch(
                 $sender === LaravelVaporSender::class ? LaravelHttpSender::class : $sender,
                 array_merge(config('flareia.sender.config', []), ['timeout' => (int) config('flareia.timeout', 2)]),
                 $endpoint,
                 $apiKey,
                 $payload,
-            )->onQueue(config('flareia.sender.config.queue', config('flareia.queue', 'default')));
+            );
+
+            if (is_string($connection) && $connection !== '') {
+                $pending->onConnection($connection);
+            }
+
+            if ($queue !== null && $queue !== '') {
+                $pending->onQueue($queue);
+            }
 
             return;
         }

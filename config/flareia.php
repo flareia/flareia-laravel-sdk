@@ -63,7 +63,7 @@ return [
             'queue_logs' => Configuration::envBoolean('FLAREIA_QUEUE_LOGS', true),
             'queue_security' => Configuration::envBoolean('FLAREIA_QUEUE_SECURITY', true),
             'connection' => env('FLAREIA_QUEUE_CONNECTION'),
-            'queue' => env('FLAREIA_SENDER_QUEUE', env('FLAREIA_QUEUE', 'default')),
+            'queue' => env('FLAREIA_SENDER_QUEUE', env('SQS_QUEUE', env('FLAREIA_QUEUE', 'default'))),
         ],
     ],
 

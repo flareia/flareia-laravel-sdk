@@ -132,6 +132,36 @@ it('LaravelBrefSender is a LaravelVaporSender for instanceof checks', function (
     expect(new LaravelBrefSender)->toBeInstanceOf(LaravelVaporSender::class);
 });
 
+it('maps sender queue default to the full SQS URL on Bref', function () {
+    Queue::fake();
+    Http::fake([
+        '*' => Http::response(['ok' => true], 200),
+    ]);
+
+    config([
+        'queue.default' => 'sqs',
+        'queue.connections.sqs' => [
+            'driver' => 'sqs',
+            'queue' => 'https://sqs.sa-east-1.amazonaws.com/123456789012/revisia-jobs',
+        ],
+    ]);
+
+    $sender = new class(['timeout' => 2, 'queue' => 'default', 'connection' => 'sqs']) extends LaravelVaporSender
+    {
+        protected function isConsole(): bool
+        {
+            return false;
+        }
+    };
+
+    $sender->post('https://flare.test/api/v1/security', 'key', ['events' => []]);
+
+    Queue::assertPushed(SendFlareIAPayload::class, function (SendFlareIAPayload $job) {
+        return $job->queue === 'https://sqs.sa-east-1.amazonaws.com/123456789012/revisia-jobs'
+            && $job->connection === 'sqs';
+    });
+});
+
 it('resolves LaravelBrefSender from the container when configured', function () {
     config([
         'flareia.sender.class' => LaravelBrefSender::class,

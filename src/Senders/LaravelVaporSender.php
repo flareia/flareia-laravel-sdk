@@ -70,8 +70,9 @@ class LaravelVaporSender implements Sender
             $job->onConnection($this->connection);
         }
 
-        if ($this->queue !== null && $this->queue !== '') {
-            $job->onQueue($this->queue);
+        $queue = Configuration::resolveSenderQueue($this->queue, $this->connection);
+        if ($queue !== null && $queue !== '') {
+            $job->onQueue($queue);
         }
 
         dispatch($job);
