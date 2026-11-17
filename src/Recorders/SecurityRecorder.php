@@ -33,6 +33,15 @@ class SecurityRecorder
             $credentials = is_array($e->credentials) ? $e->credentials : [];
             [$identifier, $loginField] = $this->loginIdentifierFromCredentials($credentials);
 
+            if ($identifier === null) {
+                $request = request();
+                if ($request !== null) {
+                    [$identifier, $loginField] = $this->loginIdentifierFromCredentials(
+                        $request->only(['email', 'username', 'login']),
+                    );
+                }
+            }
+
             $this->recordAuthEvent('auth.failed', is_string($identifier) ? $identifier : null, $loginField);
         });
         $events->listen(Login::class, fn () => $this->recordAuthEvent('auth.login', $this->identifierFromRequest()));

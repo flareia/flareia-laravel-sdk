@@ -1,6 +1,6 @@
 {
     "name": "flareia/laravel-sdk",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Reports exceptions from a Laravel application to a FlareIA instance.",
     "type": "library",
     "license": "MIT",
