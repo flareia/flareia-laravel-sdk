@@ -61,6 +61,7 @@ return [
             'queue_errors' => Configuration::envBoolean('FLAREIA_QUEUE_ERRORS', false),
             'queue_traces' => Configuration::envBoolean('FLAREIA_QUEUE_TRACES', true),
             'queue_logs' => Configuration::envBoolean('FLAREIA_QUEUE_LOGS', true),
+            'queue_security' => Configuration::envBoolean('FLAREIA_QUEUE_SECURITY', true),
             'connection' => env('FLAREIA_QUEUE_CONNECTION'),
             'queue' => env('FLAREIA_SENDER_QUEUE', env('FLAREIA_QUEUE', 'default')),
         ],
@@ -75,6 +76,17 @@ return [
     'recorders' => [
         'query' => env('FLAREIA_RECORD_QUERIES', true),
         'job' => env('FLAREIA_RECORD_JOBS', true),
+    ],
+
+    'security' => [
+        'enabled' => env('FLAREIA_SECURITY_ENABLED', true),
+        'honeypot' => env('FLAREIA_SECURITY_HONEYPOT', false),
+        'honeypot_paths' => [
+            'wp-login.php',
+            'phpmyadmin',
+            '.env',
+        ],
+        'flush_on_auth_failures' => (int) env('FLAREIA_SECURITY_FLUSH_AUTH_FAILURES', 10),
     ],
 
     'censor' => [

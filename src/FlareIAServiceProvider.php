@@ -6,8 +6,13 @@ use FlareIA\Sdk\Api;
 use FlareIA\Sdk\Laravel\AttributesProviders\LaravelRequestAttributesProvider;
 use FlareIA\Sdk\Laravel\AttributesProviders\LaravelUserAttributesProvider;
 use FlareIA\Sdk\Laravel\Console\SendTestEventCommand;
+use FlareIA\Sdk\Laravel\Http\Middleware\RecordSecurityRequest;
+use FlareIA\Sdk\Laravel\Http\Middleware\SecurityHoneypot;
 use FlareIA\Sdk\Laravel\Recorders\JobRecorder;
 use FlareIA\Sdk\Laravel\Recorders\QueryRecorder;
+use FlareIA\Sdk\Laravel\Recorders\SecurityRecorder;
+use FlareIA\Sdk\Laravel\Security\SecurityPayloadBuffer;
+use FlareIA\Sdk\Laravel\Security\SecurityTransmitter;
 use FlareIA\Sdk\Laravel\Senders\LaravelHttpSender;
 use FlareIA\Sdk\Laravel\Senders\LaravelVaporSender;
 use FlareIA\Sdk\Resource;
@@ -64,6 +69,10 @@ class FlareIAServiceProvider extends ServiceProvider
 
         $this->app->singleton(Tracer::class);
 
+        $this->app->singleton(SecurityPayloadBuffer::class);
+        $this->app->singleton(SecurityTransmitter::class);
+        $this->app->singleton(SecurityRecorder::class);
+
         $this->app->singleton(FlareIA::class);
     }
 
@@ -91,8 +100,23 @@ class FlareIAServiceProvider extends ServiceProvider
             $this->app->make(JobRecorder::class)->register();
         }
 
+        if (config('flareia.security.enabled', true)) {
+            $this->app->make(SecurityRecorder::class)->register($this->app['events']);
+
+            $this->app->make(\Illuminate\Contracts\Http\Kernel::class)
+                ->prependMiddleware(SecurityHoneypot::class);
+
+            $router = $this->app['router'];
+            $router->pushMiddlewareToGroup('web', RecordSecurityRequest::class);
+            $router->pushMiddlewareToGroup('api', RecordSecurityRequest::class);
+        }
+
         $this->app->terminating(function () {
             $this->app->make(Tracer::class)->flush();
+
+            if (config('flareia.security.enabled', true)) {
+                $this->app->make(SecurityTransmitter::class)->flush();
+            }
         });
     }
 

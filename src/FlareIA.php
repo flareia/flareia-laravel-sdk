@@ -74,6 +74,18 @@ class FlareIA
         $this->send($payload);
     }
 
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    public function security(string $type, array $context = []): void
+    {
+        if (! config('flareia.enabled', true)) {
+            return;
+        }
+
+        app(\FlareIA\Sdk\Laravel\Recorders\SecurityRecorder::class)->recordCustom($type, $context);
+    }
+
     public function reportMessage(string $message, string $level = 'error', array $context = []): void
     {
         if (! config('flareia.enabled', true)) {

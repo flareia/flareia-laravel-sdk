@@ -24,6 +24,8 @@ class LaravelVaporSender implements Sender
 
     protected bool $queueLogs;
 
+    protected bool $queueSecurity;
+
     protected ?string $queue;
 
     protected ?string $connection;
@@ -41,6 +43,7 @@ class LaravelVaporSender implements Sender
         $this->queueErrors = Configuration::toBoolean($this->config['queue_errors'] ?? null, false);
         $this->queueTraces = Configuration::toBoolean($this->config['queue_traces'] ?? null, true);
         $this->queueLogs = Configuration::toBoolean($this->config['queue_logs'] ?? null, true);
+        $this->queueSecurity = Configuration::toBoolean($this->config['queue_security'] ?? null, true);
         $this->queue = isset($this->config['queue']) ? (string) $this->config['queue'] : null;
         $this->connection = isset($this->config['connection']) ? (string) $this->config['connection'] : null;
     }
@@ -85,6 +88,7 @@ class LaravelVaporSender implements Sender
             'errors' => $this->queueErrors,
             'traces' => $this->queueTraces,
             'logs' => $this->queueLogs,
+            'security' => $this->queueSecurity,
             default => true,
         };
     }
@@ -100,6 +104,7 @@ class LaravelVaporSender implements Sender
             str_contains($endpoint, '/errors') => 'errors',
             str_contains($endpoint, '/traces') => 'traces',
             str_contains($endpoint, '/logs') => 'logs',
+            str_contains($endpoint, '/security') => 'security',
             default => 'unknown',
         };
     }

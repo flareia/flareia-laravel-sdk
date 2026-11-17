@@ -27,7 +27,9 @@ php artisan flareia:test
 
 Defina `FLAREIA_API_KEY` no `.env`.
 
-Documentação: [flareia.com.br/docs/sdks/laravel](https://flareia.com.br/docs/sdks/laravel).
+Com o SDK ativo, eventos de segurança (Laravel) podem ser enviados ao FlareIA por defeito, sem incluir palavras-passe. Visibilidade no painel e privacidade: [documentação de segurança](https://flareia.com.br/docs/produto/seguranca-laravel).
+
+Documentação completa: [flareia.com.br/docs/sdks/laravel](https://flareia.com.br/docs/sdks/laravel).
 
 ## Desenvolvimento
 
