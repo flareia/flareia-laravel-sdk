@@ -11,6 +11,7 @@ use FlareIA\Sdk\Laravel\Http\Middleware\SecurityHoneypot;
 use FlareIA\Sdk\Laravel\Recorders\JobRecorder;
 use FlareIA\Sdk\Laravel\Recorders\QueryRecorder;
 use FlareIA\Sdk\Laravel\Recorders\SecurityRecorder;
+use FlareIA\Sdk\Laravel\Recorders\TimelineRecorder;
 use FlareIA\Sdk\Laravel\Security\SecurityPayloadBuffer;
 use FlareIA\Sdk\Laravel\Security\SecurityTransmitter;
 use FlareIA\Sdk\Laravel\Senders\LaravelHttpSender;
@@ -87,6 +88,8 @@ class FlareIAServiceProvider extends ServiceProvider
                 SendTestEventCommand::class,
             ]);
         }
+
+        $this->app->make(TimelineRecorder::class)->register();
 
         if (! config('flareia.trace', true)) {
             return;

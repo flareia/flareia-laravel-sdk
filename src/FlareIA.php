@@ -6,6 +6,7 @@ use FlareIA\Sdk\Api;
 use FlareIA\Sdk\Laravel\AttributesProviders\LaravelRequestAttributesProvider;
 use FlareIA\Sdk\Laravel\AttributesProviders\LaravelUserAttributesProvider;
 use FlareIA\Sdk\Laravel\Jobs\SendErrorReport;
+use FlareIA\Sdk\Laravel\Recorders\ErrorTimeline;
 use FlareIA\Sdk\Laravel\Senders\LaravelHttpSender;
 use FlareIA\Sdk\Laravel\Senders\LaravelVaporSender;
 use FlareIA\Sdk\Sampling\RateSampler;
@@ -59,7 +60,7 @@ class FlareIA
             'stacktrace' => $this->stacktraceBuilder->build($exception),
             'previous' => $this->stacktraceBuilder->buildChain($exception),
             'context' => $this->censor->censorFields(
-                array_merge($this->context, $context),
+                $this->contextWithTimeline($exception, $context),
                 config('flareia.censor.body_fields', []),
             ),
             'request' => $this->buildRequestContext(),
@@ -111,7 +112,7 @@ class FlareIA
                 'is_application_frame' => true,
             ]],
             'context' => $this->censor->censorFields(
-                array_merge($this->context, $context),
+                $this->contextWithTimeline(null, $context, $message, $level),
                 config('flareia.censor.body_fields', []),
             ),
             'request' => $this->buildRequestContext(),
@@ -159,6 +160,54 @@ class FlareIA
 
         // Vapor sender already decides queue vs sync per entity type.
         return ! is_a($sender, LaravelVaporSender::class, true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     * @return array<string, mixed>
+     */
+    protected function contextWithTimeline(?Throwable $exception, array $context, ?string $message = null, string $level = 'error'): array
+    {
+        $merged = array_merge($this->context, $context);
+
+        $timeline = app(ErrorTimeline::class);
+        $glows = $timeline->all();
+        $manual = $merged['glows'] ?? null;
+        if (is_array($manual)) {
+            $glows = array_merge($glows, $manual);
+        }
+
+        $line = $exception
+            ? $exception::class.': '.$exception->getMessage()
+            : trim((string) $message);
+
+        if ($line !== '' && ! $this->timelineHasMessage($glows, $line) && ! $this->timelineHasMessage($glows, $exception?->getMessage() ?? $line)) {
+            $glows[] = [
+                'type' => 'log',
+                'level' => strtoupper($level),
+                'name' => $exception ? $exception::class : $level,
+                'message' => $line,
+                'time' => $timeline->offsetMs(),
+            ];
+        }
+
+        $merged['glows'] = array_values($glows);
+
+        return $merged;
+    }
+
+    /**
+     * @param  list<mixed>  $glows
+     */
+    private function timelineHasMessage(array $glows, string $message): bool
+    {
+        foreach ($glows as $glow) {
+            if (is_array($glow) && ($glow['message'] ?? null) === $message) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
